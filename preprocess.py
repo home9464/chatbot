@@ -29,6 +29,7 @@ def loadLines(fileName, fields):
             lines[lineObj['lineID']] = lineObj
     return lines
 
+
 def loadConversations(fileName, lines, fields):
     """
     Args:
@@ -139,7 +140,7 @@ def binaryMatrix(padlist, value=params.PAD_token):
                 m[i].append(1)
     return m
 
-# Returns padded input sequence tensor and lengths
+
 def inputVar(sentences, voc):
     """
     Args:
@@ -162,9 +163,9 @@ def inputVar(sentences, voc):
     padVar = torch.LongTensor(padList)
     return padVar, lengths
 
-# Returns padded target sequence tensor, padding mask, and max target length
+
 def outputVar(sentences, voc):
-    """
+    """get padded target sequence tensor, padding mask, and max target length
     Args:
         sentences: ['sentence', ...]
         voc: instance of Vocabulary.Voc
@@ -177,7 +178,7 @@ def outputVar(sentences, voc):
     padVar = torch.LongTensor(padList)
     return padVar, mask, max_target_len
 
-# Returns all items for a given batch of pairs
+
 def batch2TrainData(voc, pair_batch):
     pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
     input_batch, output_batch = [], []
