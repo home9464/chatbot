@@ -30,16 +30,37 @@ def loadLines(fileName, fields):
     return lines
 
 def loadConversations(fileName, lines, fields):
+    """
+    Args:
+        fileName: each line has a format like
+                  u0 +++$+++ u2 +++$+++ m0 +++$+++ ['L194', 'L195', 'L196', 'L197']
+        lines: 
+            ["lineID", "characterID", "movieID", "character", "text"]
+            L1045 +++$+++ u0 +++$+++ m0 +++$+++ BIANCA +++$+++ They do not!
+        fields: ["character1ID", "character2ID", "movieID", "utteranceIDs"]
+
+    Return:
+        [
+            {
+                "character1ID": "L123",
+                "character2ID": "L124",
+                "movieID": "m3",
+                "utteranceIDs": "['L194', 'L195', 'L196', 'L197']"
+                "lines":["hello", "world"]
+            },
+            ...
+        ]
+    """
     conversations = []
     with open(fileName, 'r', encoding='iso-8859-1') as f:
         for line in f:
+            # u0 +++$+++ u2 +++$+++ m0 +++$+++ ['L194', 'L195', 'L196', 'L197']
             values = line.split(" +++$+++ ")
             # Extract fields
             convObj = {}
             for i, field in enumerate(fields):
                 convObj[field] = values[i]
-            # Convert string to list (convObj["utteranceIDs"] == "['L598485', 'L598486', ...]")
-            lineIds = eval(convObj["utteranceIDs"])
+            lineIds = eval(convObj["utteranceIDs"])  # ['L194', 'L195', 'L196', 'L197']
             # Reassemble lines
             convObj["lines"] = []
             for lineId in lineIds:
@@ -47,7 +68,22 @@ def loadConversations(fileName, lines, fields):
             conversations.append(convObj)
     return conversations
 
+
 def extractSentencePairs(conversations):
+    """extract conversation as pairs
+
+    example:
+    A: hello
+    B: nice to see you
+    A: byebye
+    B: have a nice day
+
+    ->
+
+    ("hello", "nice to see you")
+    (nice to see you", "byebye")
+    ("byebye", "have a nice day")
+    """
     qa_pairs = []
     for conversation in conversations:
         # Iterate over all the lines of the conversation
@@ -60,50 +96,150 @@ def extractSentencePairs(conversations):
     return qa_pairs
 
 
-# First, we must convert the Unicode strings to ASCII using
-# ``unicodeToAscii``. Next, we should convert all letters to lowercase and
-# trim all non-letter characters except for basic punctuation
-# (``normalizeString``). Finally, to aid in training convergence, we will
-# filter out sentences with length greater than the ``MAX_LENGTH``
-# threshold (``filterPairs``).
-#
-
-
-# Turn a Unicode string to plain ASCII, thanks to
-# http://stackoverflow.com/a/518232/2809427
 def unicodeToAscii(s):
     return ''.join(
         c for c in unicodedata.normalize('NFD', s)
         if unicodedata.category(c) != 'Mn'
     )
 
-# Lowercase, trim, and remove non-letter characters
+
 def normalizeString(s):
+    """lowercase, trim, and remove non-letter characters
+    """
     s = unicodeToAscii(s.lower().strip())
     s = re.sub(r"([.!?])", r" \1", s)
     s = re.sub(r"[^a-zA-Z.!?]+", r" ", s)
     s = re.sub(r"\s+", r" ", s).strip()
     return s
 
-# Read query/response pairs and return a voc object
+
+def indexesFromSentence(voc, sentence):
+    return [voc.word2index[word] for word in sentence.split(' ')] + [params.EOS_token]
+
+
+def zeroPadding(indices, fillvalue=params.PAD_token):
+    return list(itertools.zip_longest(*indices, fillvalue=fillvalue))
+
+
+def binaryMatrix(padlist, value=params.PAD_token):
+    """
+    Args:
+        padlist: list of zero padded word index, example [[1,2,4],[0,3,5],[0,0,6]]
+    """
+    m = []
+    for i, seq in enumerate(padlist):
+        m.append([])
+        for token in seq:
+            if token == params.PAD_token:
+                m[i].append(0)
+            else:
+                m[i].append(1)
+    return m
+
+# Returns padded input sequence tensor and lengths
+def inputVar(sentences, voc):
+    """
+    Args:
+        sentences: ['sentence', ...]
+        voc: instance of Vocabulary.Voc
+
+    Returns:
+        padVar: [[1,2,4],
+                 [0,3,5],
+                 [0,0,6]]
+                note it is column-wised for each sentence, so 1st sentence is [1, 0, 0]
+                2nd sentence is [2,3,0] and 3rd sentence is [4,5,6]
+        lengths: [1,2,3]
+    """
+    #[[indices], [], ...]
+    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in sentences]
+    # tensor([1, 2, 3, ...]), length of each sentence
+    lengths = torch.tensor([len(indexes) for indexes in indexes_batch])
+    padList = zeroPadding(indexes_batch)
+    padVar = torch.LongTensor(padList)
+    return padVar, lengths
+
+# Returns padded target sequence tensor, padding mask, and max target length
+def outputVar(sentences, voc):
+    """
+    Args:
+        sentences: ['sentence', ...]
+        voc: instance of Vocabulary.Voc
+    """
+    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in sentences]
+    max_target_len = max([len(indexes) for indexes in indexes_batch])
+    padList = zeroPadding(indexes_batch)
+    mask = binaryMatrix(padList)
+    mask = torch.ByteTensor(mask)
+    padVar = torch.LongTensor(padList)
+    return padVar, mask, max_target_len
+
+# Returns all items for a given batch of pairs
+def batch2TrainData(voc, pair_batch):
+    pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
+    input_batch, output_batch = [], []
+    for pair in pair_batch:
+        input_batch.append(pair[0])
+        output_batch.append(pair[1])
+    inp, lengths = inputVar(input_batch, voc)
+    output, mask, max_target_len = outputVar(output_batch, voc)
+    return inp, lengths, output, mask, max_target_len
+
+
+def preprocess(delimiter='\t'):
+    """convert raw files into paired conversations like "what is your name<TAB>Tom Hanks"
+    """
+    # Unescape the delimiter
+    delimiter = str(codecs.decode(delimiter, "unicode_escape"))
+
+    # Initialize lines dict, conversations list, and field ids
+    lines = {}
+    conversations = []
+    MOVIE_LINES_FIELDS = ["lineID", "characterID", "movieID", "character", "text"]
+    MOVIE_CONVERSATIONS_FIELDS = ["character1ID", "character2ID", "movieID", "utteranceIDs"]
+
+    # Load lines and process conversations
+    print("\nProcessing corpus...")
+    lines = loadLines(os.path.join(params.corpus, "movie_lines.txt"), MOVIE_LINES_FIELDS)
+
+    print("\nLoading conversations...")
+    conversations = loadConversations(
+        os.path.join(params.corpus, "movie_conversations.txt"),
+        lines,
+        MOVIE_CONVERSATIONS_FIELDS)
+
+    # Write new csv file
+    print("\nWriting newly formatted file...")
+    with open(params.datafile, 'w', encoding='utf-8') as outputfile:
+        writer = csv.writer(outputfile, delimiter=delimiter)
+        for pair in extractSentencePairs(conversations):
+            writer.writerow(pair)
+    #return datafile
+
+
+
 def readVocs(datafile, corpus_name):
-    print("Reading lines...")
-    # Read the file and split into lines
-    lines = open(datafile, encoding='utf-8').\
-        read().strip().split('\n')
-    # Split every line into pairs and normalize
+    """Read query/response pairs and return a voc object
+    """
+    # each line is a pair of conversation
+    lines = open(datafile, encoding='utf-8').read().strip().split('\n')
     pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
     voc = Voc(corpus_name)
     return voc, pairs
+
 
 # Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
 def filterPair(p):
     # Input sequences need to preserve the last word for EOS token
     return len(p[0].split(' ')) < params.MAX_LENGTH and len(p[1].split(' ')) < params.MAX_LENGTH
 
+
 # Filter pairs using filterPair condition
 def filterPairs(pairs):
+    """filter long sentences which number of words exceed MAX_LENGTH
+    """
     return [pair for pair in pairs if filterPair(pair)]
+
 
 def loadVocPair(corpus, corpus_name, datafile, save_dir):
     """return a populated voc object and pairs list
@@ -119,7 +255,6 @@ def loadVocPair(corpus, corpus_name, datafile, save_dir):
         voc.addSentence(pair[1])
     print("Counted words:", voc.num_words)
     return voc, pairs
-
 
 
 def trimRareWords(voc, pairs, MIN_COUNT):
@@ -150,88 +285,17 @@ def trimRareWords(voc, pairs, MIN_COUNT):
     print("Trimmed from {} pairs to {}, {:.4f} of total".format(len(pairs), len(keep_pairs), len(keep_pairs) / len(pairs)))
     return keep_pairs
 
-def indexesFromSentence(voc, sentence):
-    return [voc.word2index[word] for word in sentence.split(' ')] + [params.EOS_token]
-
-def zeroPadding(l, fillvalue=params.PAD_token):
-    return list(itertools.zip_longest(*l, fillvalue=fillvalue))
-
-def binaryMatrix(l, value=params.PAD_token):
-    m = []
-    for i, seq in enumerate(l):
-        m.append([])
-        for token in seq:
-            if token == params.PAD_token:
-                m[i].append(0)
-            else:
-                m[i].append(1)
-    return m
-
-# Returns padded input sequence tensor and lengths
-def inputVar(l, voc):
-    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in l]
-    lengths = torch.tensor([len(indexes) for indexes in indexes_batch])
-    padList = zeroPadding(indexes_batch)
-    padVar = torch.LongTensor(padList)
-    return padVar, lengths
-
-# Returns padded target sequence tensor, padding mask, and max target length
-def outputVar(l, voc):
-    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in l]
-    max_target_len = max([len(indexes) for indexes in indexes_batch])
-    padList = zeroPadding(indexes_batch)
-    mask = binaryMatrix(padList)
-    mask = torch.ByteTensor(mask)
-    padVar = torch.LongTensor(padList)
-    return padVar, mask, max_target_len
-
-# Returns all items for a given batch of pairs
-def batch2TrainData(voc, pair_batch):
-    pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
-    input_batch, output_batch = [], []
-    for pair in pair_batch:
-        input_batch.append(pair[0])
-        output_batch.append(pair[1])
-    inp, lengths = inputVar(input_batch, voc)
-    output, mask, max_target_len = outputVar(output_batch, voc)
-    return inp, lengths, output, mask, max_target_len
-
-def preprocess():
-
-    delimiter = '\t'
-    # Unescape the delimiter
-    delimiter = str(codecs.decode(delimiter, "unicode_escape"))
-
-    # Initialize lines dict, conversations list, and field ids
-    lines = {}
-    conversations = []
-    MOVIE_LINES_FIELDS = ["lineID", "characterID", "movieID", "character", "text"]
-    MOVIE_CONVERSATIONS_FIELDS = ["character1ID", "character2ID", "movieID", "utteranceIDs"]
-
-    # Load lines and process conversations
-    print("\nProcessing corpus...")
-    lines = loadLines(os.path.join(params.corpus, "movie_lines.txt"), MOVIE_LINES_FIELDS)
-
-    print("\nLoading conversations...")
-    conversations = loadConversations(os.path.join(params.corpus, "movie_conversations.txt"),
-                                  lines, MOVIE_CONVERSATIONS_FIELDS)
-
-    # Write new csv file
-    print("\nWriting newly formatted file...")
-    with open(params.datafile, 'w', encoding='utf-8') as outputfile:
-        writer = csv.writer(outputfile, delimiter=delimiter)
-        for pair in extractSentencePairs(conversations):
-            writer.writerow(pair)
-    #return datafile
 
 def loadPreparedData():
+    """load paired conversation and convert into voc
+    """
     if not os.path.exists(params.datafile):
         preprocess()
-    voc, pairs = loadVocPair(params.corpus, params.corpus_name, params.datafile, params.save_dir)
+    voc, pairs = loadVocPair(params.corpus, params.corpus_name, 
+                             params.datafile, params.save_dir)
     # Trim voc and pairs
     pairs = trimRareWords(voc, pairs, params.MIN_COUNT)
 
     #batches = batch2TrainData(voc, [random.choice(pairs) for _ in range(params.BATCH_SIZE)])
     #input_variable, lengths, target_variable, mask, max_target_len = batches
-
     return voc, pairs

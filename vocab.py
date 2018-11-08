@@ -1,12 +1,17 @@
 import params
 
+
 class Voc:
+    """vocabulary
+    """
     def __init__(self, name):
         self.name = name
         self.trimmed = False
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {params.PAD_token: "PAD", params.SOS_token: "SOS", params.EOS_token: "EOS"}
+        self.index2word = {params.PAD_token: "PAD",
+                           params.SOS_token: "SOS",
+                           params.EOS_token: "EOS"}
         self.num_words = 3  # Count SOS, EOS, PAD
 
     def addSentence(self, sentence):
@@ -35,13 +40,16 @@ class Voc:
                 keep_words.append(k)
 
         print('keep_words {} / {} = {:.4f}'.format(
-            len(keep_words), len(self.word2index), len(keep_words) / len(self.word2index)
+            len(keep_words), len(self.word2index),
+            len(keep_words) / len(self.word2index)
         ))
 
         # Reinitialize dictionaries
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {params.PAD_token: "PAD", params.SOS_token: "SOS", params.EOS_token: "EOS"}
+        self.index2word = {params.PAD_token: "PAD", 
+                           params.SOS_token: "SOS", 
+                           params.EOS_token: "EOS"}
         self.num_words = 3 # Count default tokens
 
         for word in keep_words:

@@ -115,7 +115,12 @@ def train(input_variable, lengths, target_variable,
 def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, 
     ecoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir, 
     n_iteration, batch_size, print_every, save_every, clip, corpus_name, loadFilename):
-
+    """
+    Args:
+        model_name: string, "cb_model"
+        voc: instance of vocabulary.Voc
+        pairs: [["A","B"], ["C", "D"], ...]
+    """
     # Load batches for each iteration
     training_batches = [batch2TrainData(voc, [random.choice(pairs) for _ in range(batch_size)])
                       for _ in range(n_iteration)]
@@ -161,19 +166,6 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer,
                 'embedding': embedding.state_dict()
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
 
-######################################################################
-# Run Model
-# ---------
-#
-# Regardless of whether we want to train or test the chatbot model, we
-# must initialize the individual encoder and decoder models. In the
-# following block, we set our desired configurations, choose to start from
-# scratch or set a checkpoint to load from, and build and initialize the
-# models. Feel free to play with different model configurations to
-# optimize performance.
-#
-
-# Configure models
 
 # Set checkpoint to load from; set to None if starting from scratch
 loadFilename = None
@@ -220,20 +212,6 @@ encoder = encoder.to(params.device)
 decoder = decoder.to(params.device)
 print('Models built and ready to go!')
 
-
-######################################################################
-# Run Training
-# ~~~~~~~~~~~~
-#
-# Run the following block if you want to train the model.
-#
-# First we set training parameters, then we initialize our optimizers, and
-# finally we call the ``trainIters`` function to run our training
-# iterations.
-#
-
-# Configure training/optimization
-
 # Ensure dropout layers are in train mode
 encoder.train()
 decoder.train()
@@ -251,7 +229,7 @@ if loadFilename:
 print("Starting Training!")
 trainIters(params.model_name, voc, pairs, encoder, decoder, 
            encoder_optimizer, decoder_optimizer,
-           embedding, 
+           embedding,
            params.encoder_n_layers, params.decoder_n_layers, params.save_dir, 
            params.n_iteration, params.batch_size,
            params.print_every, params.save_every, 
