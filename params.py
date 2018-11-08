@@ -23,6 +23,7 @@ print_every = 1
 save_every = 500
 
 save_dir = os.path.join("data", "save")
+datafile = os.path.join(corpus, "formatted_movie_lines.txt")
 
 model_name = 'cb_model'
 attn_model = 'dot'

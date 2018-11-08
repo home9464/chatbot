@@ -105,8 +105,9 @@ def filterPair(p):
 def filterPairs(pairs):
     return [pair for pair in pairs if filterPair(pair)]
 
-# Using the functions defined above, return a populated voc object and pairs list
-def loadPrepareData(corpus, corpus_name, datafile, save_dir):
+def loadVocPair(corpus, corpus_name, datafile, save_dir):
+    """return a populated voc object and pairs list
+    """
     print("Start preparing training data ...")
     voc, pairs = readVocs(datafile, corpus_name)
     print("Read {!s} sentence pairs".format(len(pairs)))
@@ -196,7 +197,6 @@ def batch2TrainData(voc, pair_batch):
     return inp, lengths, output, mask, max_target_len
 
 def preprocess():
-    datafile = os.path.join(params.corpus, "formatted_movie_lines.txt")
 
     delimiter = '\t'
     # Unescape the delimiter
@@ -218,17 +218,20 @@ def preprocess():
 
     # Write new csv file
     print("\nWriting newly formatted file...")
-    with open(datafile, 'w', encoding='utf-8') as outputfile:
+    with open(params.datafile, 'w', encoding='utf-8') as outputfile:
         writer = csv.writer(outputfile, delimiter=delimiter)
         for pair in extractSentencePairs(conversations):
             writer.writerow(pair)
     #return datafile
 
-    voc, pairs = loadPrepareData(params.corpus, params.corpus_name, datafile, params.save_dir)
+def loadPreparedData():
+    if not os.path.exists(params.datafile):
+        preprocess()
+    voc, pairs = loadVocPair(params.corpus, params.corpus_name, params.datafile, params.save_dir)
     # Trim voc and pairs
     pairs = trimRareWords(voc, pairs, params.MIN_COUNT)
 
-    batches = batch2TrainData(voc, [random.choice(pairs) for _ in range(params.BATCH_SIZE)])
-    input_variable, lengths, target_variable, mask, max_target_len = batches
+    #batches = batch2TrainData(voc, [random.choice(pairs) for _ in range(params.BATCH_SIZE)])
+    #input_variable, lengths, target_variable, mask, max_target_len = batches
 
     return voc, pairs

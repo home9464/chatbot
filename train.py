@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 
-from preprocess import preprocess, batch2TrainData, indexesFromSentence, normalizeString
+from preprocess import loadPreparedData, batch2TrainData, indexesFromSentence, normalizeString
 
 from encoder import EncoderRNN
 from decoder import LuongAttnDecoderRNN
@@ -183,7 +183,7 @@ checkpoint_iter = 4000
 #                            '{}_checkpoint.tar'.format(checkpoint_iter))
 
 
-voc, pairs = preprocess()
+voc, pairs = loadPreparedData()
 
 # Load model if a loadFilename is provided
 if loadFilename:

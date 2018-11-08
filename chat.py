@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import params
 
-from preprocess import preprocess, indexesFromSentence, normalizeString
+from preprocess import loadPreparedData, indexesFromSentence, normalizeString
 from encoder import EncoderRNN
 from decoder import LuongAttnDecoderRNN
 from search import GreedySearchDecoder
@@ -54,7 +54,8 @@ def evaluateInput(encoder, decoder, searcher, voc):
             print("Error: Encountered unknown word.")
 
 
-voc, pairs = preprocess()
+print('Load vocabulary ...')
+voc, pairs = loadPreparedData()
 
 # Set dropout layers to eval mode
 loadFilename = None
@@ -77,7 +78,7 @@ embedding_sd = checkpoint['embedding']
 voc.__dict__ = checkpoint['voc_dict']
 
 
-print('Building encoder and decoder ...')
+print('Load encoder and decoder ...')
 # Initialize word embeddings
 embedding = nn.Embedding(voc.num_words, params.hidden_size)
 if loadFilename:
@@ -105,4 +106,6 @@ decoder.eval()
 searcher = GreedySearchDecoder(encoder, decoder)
 
 # Begin chatting (uncomment and run the following line to begin)
+print('Bot is ready')
+
 evaluateInput(encoder, decoder, searcher, voc)
