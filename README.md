@@ -1,5 +1,5 @@
 ## A chatbot
-This is a slightly modified repo of Pytroch's implementation of chatbot https://pytorch.org/tutorials/beginner/chatbot_tutorial.html
+This is a slightly modified repo of Pytorch's implementation of chatbot https://pytorch.org/tutorials/beginner/chatbot_tutorial.html
 
 
 
@@ -23,7 +23,7 @@ $python train.py
 ## Start conversation (after training finsihed)
 $python chat.py
 
-## Give the bot some personalities?
+## [todo] Give the bot some personalities?
 
 The training data determine:
 
@@ -36,5 +36,3 @@ The 2nd point will be more important because most words are already covered in d
 Would be great if the bot can talk like Joey? Luckily, the full transcript are public available from here: https://fangj.github.io/friends/
 
 So we need to download it, extract all conversations that involved Joey and train the model with it.
-
-
