@@ -125,6 +125,9 @@ def binaryMatrix(padlist, value=params.PAD_token):
     """
     Args:
         padlist: list of zero padded word index, example [[1,2,4],[0,3,5],[0,0,6]]
+
+    Returns:
+        matrix: example, [[1,1,1], [0,1,1], [0,0,1]]
     """
     m = []
     for i, seq in enumerate(padlist):
