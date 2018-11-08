@@ -1,8 +1,8 @@
 import os
 
 
-#device = 'cpu'
-device = 'cuda'
+device = 'cpu'
+#device = 'cuda'
 MAX_LENGTH = 10  # Maximum sentence length to consider
 MIN_COUNT = 3    # Minimum word count threshold for trimming
 BATCH_SIZE = 5
