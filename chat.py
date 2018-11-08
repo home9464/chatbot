@@ -1,7 +1,9 @@
+import os
 import torch
 import torch.nn as nn
 import params
-from preprocess import preprocess, indexesFromSentence, 
+
+from preprocess import preprocess, indexesFromSentence, normalizeString
 from encoder import EncoderRNN
 from decoder import LuongAttnDecoderRNN
 from search import GreedySearchDecoder
@@ -55,7 +57,13 @@ def evaluateInput(encoder, decoder, searcher, voc):
 voc, pairs = preprocess()
 
 # Set dropout layers to eval mode
-loadFilename = ''
+loadFilename = None
+checkpoint_iter = 4000
+loadFilename = os.path.join(params.save_dir,
+                            params.model_name,
+                            params.corpus_name,
+                            '{}-{}_{}'.format(params.encoder_n_layers, params.decoder_n_layers, params.hidden_size),
+                            '{}_checkpoint.tar'.format(checkpoint_iter))
 
 # If loading on same machine the model was trained on
 checkpoint = torch.load(loadFilename)
