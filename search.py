@@ -62,6 +62,8 @@ class BeamSearch:
         """
         Args:
             k: the window size
+        Returns:
+            k predictions 
         """
         sequences = [[list(), 1.0]]
         for d in self.data:
