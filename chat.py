@@ -58,7 +58,8 @@ print('Load vocabulary ...')
 voc, pairs = loadPreparedData()
 
 # Set dropout layers to eval modeloadFilename = None
-checkpoint_iter = params.n_iteration
+#checkpoint_iter = params.n_iteration
+checkpoint_iter = 1600
 loadFilename = os.path.join(params.save_dir,
                             params.model_name,
                             params.corpus_name,

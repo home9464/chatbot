@@ -36,6 +36,8 @@ class GreedySearchDecoder(nn.Module):
 class BeamSearch:
     """decoder to generate a sequence of 10 words (nrows) over a vocab of 5 words
     example: 'I like do something that something I like do that'
+
+    Use beam search
     """
     def __init__(self):
         self.index2word = {0:'I', 1:'like', 2:'do', 3:'something', 4:'that'}
