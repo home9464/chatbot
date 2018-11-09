@@ -152,6 +152,8 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer,
 
         # Save checkpoint
         if (iteration % save_every == 0):
+            #fn = os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint'))
+            #print(fn)
             directory = os.path.join(save_dir, model_name, corpus_name, '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, params.hidden_size))
             if not os.path.exists(directory):
                 os.makedirs(directory)
@@ -168,7 +170,8 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer,
 
 
 
-data_file = 'friends.tsv'
+#data_file = 'friends.tsv'
+data_file = 'tableau.tsv'
 voc, pairs = loadPreparedData(data_file)
 
 print('Building encoder and decoder ...')
