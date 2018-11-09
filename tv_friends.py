@@ -17,7 +17,7 @@ def normalize_string(text):
     text = re.sub(r'\(.*\)', r' ', text)
     text = re.sub(r"([.!?])", r" \1", text)
     #text = re.sub(r"[^a-zA-Z.!?]+", r" ", text)
-    text = re.sub(r"[^a-zA-Z]+", r" ", text)
+    text = re.sub(r"[^a-zA-Z']+", r" ", text)
     text = re.sub(r"\s+", r" ", text).strip()
     return text
 
@@ -55,4 +55,4 @@ def preprocess(datafile, delimiter='\t'):
         #for pair in pairs:
         #    writer.writerow(pair)
 
-#preprocess(os.path.join(base_dir, 'friends.tsv'))
+preprocess(os.path.join(base_dir, 'friends.tsv'))

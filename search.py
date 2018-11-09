@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import params 
-
+import numpy as np
 class GreedySearchDecoder(nn.Module):
     def __init__(self, encoder, decoder):
         super(GreedySearchDecoder, self).__init__()
@@ -31,3 +31,53 @@ class GreedySearchDecoder(nn.Module):
             decoder_input = torch.unsqueeze(decoder_input, 0)
         # Return collections of word tokens and scores
         return all_tokens, all_scores
+
+
+class BeamSearch:
+    """decoder to generate a sequence of 10 words (nrows) over a vocab of 5 words
+    example: 'I like do something that something I like do that'
+    """
+    def __init__(self):
+        self.index2word = {0:'I', 1:'like', 2:'do', 3:'something', 4:'that'}
+        data = [[0.1, 0.2, 0.3, 0.4, 0.5],
+		    [0.5, 0.4, 0.3, 0.2, 0.1],
+		    [0.1, 0.2, 0.3, 0.4, 0.5],
+		    [0.5, 0.4, 0.3, 0.2, 0.1],
+		    [0.1, 0.2, 0.3, 0.4, 0.5],
+		    [0.5, 0.4, 0.3, 0.2, 0.1],
+		    [0.1, 0.2, 0.3, 0.4, 0.5],
+		    [0.5, 0.4, 0.3, 0.2, 0.1],
+		    [0.1, 0.2, 0.3, 0.4, 0.5],
+		    [0.5, 0.4, 0.3, 0.2, 0.1]]
+        self.data = np.array(data)
+    
+    
+    def greedy(self):
+        # for every position out of 10, select the most probably 
+        greedy_decoder = [np.argmax(d) for d in self.data]  
+        print([self.index2word[d] for d in greedy_decoder])  # ['that', 'I', 'that', 'I', 'that', 'I', 'that', 'I', 'that', 'I']
+
+
+    def beam(self, k=3):
+        """
+        Args:
+            k: the window size
+        """
+        sequences = [[list(), 1.0]]
+        for d in self.data:
+            all_candidates = list()
+            # expand each current candidates            
+            for i in range(len(sequences)):
+                seq, score = sequences[i]
+                for j in range(len(d)):
+                    candidate = [seq + [j], score*- np.log(d[j])]
+                    all_candidates.append(candidate)
+            # order all candidates by score
+            ordered = sorted(all_candidates, key=lambda tup: tup[1])
+            sequences = ordered[:k]
+        print(sequences)
+        return sequences
+
+if __name__ == '__main__':
+    #BeamSearch().greedy()
+    BeamSearch().beam()

@@ -3,7 +3,7 @@ import os
 
 device = 'cpu'
 #device = 'cuda'
-MAX_LENGTH = 30  # Maximum sentence length to consider
+MAX_LENGTH = 20  # Maximum sentence length to consider
 #MAX_SENTENCE_LENGTH = 30  # Maximum sentence length (number of words) to consider
 
 MIN_COUNT = 2  # Minimum word count threshold for trimming
@@ -20,7 +20,7 @@ clip = 50.0
 teacher_forcing_ratio = 1.0
 learning_rate = 0.0001
 decoder_learning_ratio = 5.0
-n_iteration = 200
+n_iteration = 4000
 print_every = 1
 save_every = n_iteration // 5
 
@@ -31,8 +31,8 @@ model_name = 'cb_model'
 attn_model = 'dot'
 #attn_model = 'general'
 #attn_model = 'concat'
-hidden_size = 500
+hidden_size = 1000
 encoder_n_layers = 2
 decoder_n_layers = 2
-dropout = 0.1
-batch_size = 64
+dropout = 0.5
+batch_size = 32
