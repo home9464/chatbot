@@ -57,8 +57,7 @@ def evaluateInput(encoder, decoder, searcher, voc):
 print('Load vocabulary ...')
 voc, pairs = loadPreparedData()
 
-# Set dropout layers to eval mode
-loadFilename = None
+# Set dropout layers to eval modeloadFilename = None
 checkpoint_iter = 4000
 loadFilename = os.path.join(params.save_dir,
                             params.model_name,

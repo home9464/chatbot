@@ -3,10 +3,10 @@ import os
 
 device = 'cpu'
 #device = 'cuda'
-MAX_LENGTH = 10  # Maximum sentence length to consider
-MAX_SENTENCE_LENGTH = 30  # Maximum sentence length (number of words) to consider
+MAX_LENGTH = 30  # Maximum sentence length to consider
+#MAX_SENTENCE_LENGTH = 30  # Maximum sentence length (number of words) to consider
 
-MIN_COUNT = 3    # Minimum word count threshold for trimming
+MIN_COUNT = 2    # Minimum word count threshold for trimming
 BATCH_SIZE = 5
 
 PAD_token = 0  # Used for padding short sentences

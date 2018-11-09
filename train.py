@@ -167,35 +167,14 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer,
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
 
 
-# Set checkpoint to load from; set to None if starting from scratch
-loadFilename = None
-checkpoint_iter = 4000
-#loadFilename = os.path.join(save_dir, model_name, corpus_name,
-#                            '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, hidden_size),
-#                            '{}_checkpoint.tar'.format(checkpoint_iter))
 
-
-voc, pairs = loadPreparedData()
-
-# Load model if a loadFilename is provided
-if loadFilename:
-    # If loading on same machine the model was trained on
-    checkpoint = torch.load(loadFilename)
-    # If loading a model trained on GPU to CPU
-    #checkpoint = torch.load(loadFilename, map_location=torch.device('cpu'))
-    encoder_sd = checkpoint['en']
-    decoder_sd = checkpoint['de']
-    encoder_optimizer_sd = checkpoint['en_opt']
-    decoder_optimizer_sd = checkpoint['de_opt']
-    embedding_sd = checkpoint['embedding']
-    voc.__dict__ = checkpoint['voc_dict']
-
+data_file = 'friends.tsv'
+voc, pairs = loadPreparedData(data_file)
 
 print('Building encoder and decoder ...')
 # Initialize word embeddings
 embedding = nn.Embedding(voc.num_words, params.hidden_size)
-if loadFilename:
-    embedding.load_state_dict(embedding_sd)
+
 # Initialize encoder & decoder models
 encoder = EncoderRNN(params.hidden_size, embedding, params.encoder_n_layers, params.dropout)
 decoder = LuongAttnDecoderRNN(params.attn_model, 
@@ -204,9 +183,6 @@ decoder = LuongAttnDecoderRNN(params.attn_model,
                               voc.num_words,
                               params.decoder_n_layers,
                               params.dropout)
-if loadFilename:
-    encoder.load_state_dict(encoder_sd)
-    decoder.load_state_dict(decoder_sd)
 # Use appropriate device
 encoder = encoder.to(params.device)
 decoder = decoder.to(params.device)
@@ -221,9 +197,6 @@ print('Building optimizers ...')
 encoder_optimizer = optim.Adam(encoder.parameters(), lr=params.learning_rate)
 decoder_optimizer = optim.Adam(decoder.parameters(), 
                                lr=params.learning_rate * params.decoder_learning_ratio)
-if loadFilename:
-    encoder_optimizer.load_state_dict(encoder_optimizer_sd)
-    decoder_optimizer.load_state_dict(decoder_optimizer_sd)
 
 # Run training iterations
 print("Starting Training!")
@@ -233,6 +206,6 @@ trainIters(params.model_name, voc, pairs, encoder, decoder,
            params.encoder_n_layers, params.decoder_n_layers, params.save_dir, 
            params.n_iteration, params.batch_size,
            params.print_every, params.save_every, 
-           params.clip, params.corpus_name, loadFilename)
+           params.clip, params.corpus_name, loadFilename=None)
 
 

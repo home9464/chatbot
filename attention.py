@@ -11,9 +11,9 @@ class Attn(nn.Module):
             raise ValueError(self.method, "is not an appropriate attention method.")
         self.hidden_size = hidden_size
         if self.method == 'general':
-            self.attn = torch.nn.Linear(self.hidden_size, hidden_size)
+            self.attn = torch.nn.Linear(hidden_size, hidden_size)
         elif self.method == 'concat':
-            self.attn = torch.nn.Linear(self.hidden_size * 2, hidden_size)
+            self.attn = torch.nn.Linear(pythhidden_size * 2, hidden_size)
             self.v = torch.nn.Parameter(torch.FloatTensor(hidden_size))
 
     def dot_score(self, hidden, encoder_output):

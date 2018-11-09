@@ -192,6 +192,7 @@ def batch2TrainData(voc, pair_batch):
 
 def preprocess(delimiter='\t'):
     """convert raw files into paired conversations like "what is your name<TAB>Tom Hanks"
+    and save it as a new file
     """
     # Unescape the delimiter
     delimiter = str(codecs.decode(delimiter, "unicode_escape"))
@@ -290,9 +291,11 @@ def trimRareWords(voc, pairs, MIN_COUNT):
     return keep_pairs
 
 
-def loadPreparedData():
+def loadPreparedData(datafile=None):
     """load paired conversation and convert into voc
     """
+    if datafile:
+        params.datafile = datafile
     if not os.path.exists(params.datafile):
         preprocess()
     voc, pairs = loadVocPair(params.corpus, params.corpus_name, 
