@@ -36,3 +36,9 @@ The 2nd point will be more important because most words are already covered in d
 Would be great if the bot can talk like Joey? Luckily, the full transcript are public available from here: https://fangj.github.io/friends/
 
 So we need to download it, extract all conversations that involved Joey and train the model with it.
+
+
+
+git add .
+git commit -m "update"
+git push origin master

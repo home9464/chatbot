@@ -29,7 +29,8 @@ def train(input_variable, lengths, target_variable,
           mask, max_target_len, encoder, decoder, embedding,
           encoder_optimizer, decoder_optimizer, batch_size, clip, 
           max_length=params.MAX_LENGTH):
-
+    """
+    """
     # Zero gradients
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
