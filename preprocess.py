@@ -151,8 +151,8 @@ def inputVar(sentences, voc):
         padVar: [[1,2,4],
                  [0,3,5],
                  [0,0,6]]
-                note it is column-wised for each sentence, so 1st sentence is [1, 0, 0]
-                2nd sentence is [2,3,0] and 3rd sentence is [4,5,6]
+                note it is column-wised for each sentence, so 1st sentence is [1]
+                2nd sentence is [2,3] and 3rd sentence is [4,5,6]
         lengths: [1,2,3]
     """
     #[[indices], [], ...]
