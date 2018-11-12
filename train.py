@@ -103,12 +103,7 @@ def train(input_variable, lengths, target_variable,
 
 ######################################################################
 # Training iterations
-#
-# It is finally time to tie the full training procedure together with the
-# data. The ``trainIters`` function is responsible for running
-# ``n_iterations`` of training given the passed models, optimizers, data,
-# etc. This function is quite self explanatory, as we have done the heavy
-# lifting with the ``train`` function.
+
 #
 # One thing to note is that when we save our model, we save a tarball
 # containing the encoder and decoder state_dicts (parameters), the

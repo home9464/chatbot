@@ -189,14 +189,15 @@ def outputVar(sentences, voc):
 
 def batch2TrainData(voc, pair_batch):
     """
+    batch_size = number of sentences feeded to the model at each training step
     Args:
         voc: instance of Vocabulary.Voc
         pair_batch: [[pair], [pair]. ,,,]
     Returns:
-        inp: input/query with shape of [max_seq_len, num_sentences]
+        inp: input/query with shape of [max_seq_len, batch_size]
         length: length of each sentence in input
-        ouput: output/response with shape of [max_seq_len, num_sentences]
-        mask: mask of output with shape of [max_seq_len, num_sentences]
+        ouput: output/response with shape of [max_seq_len, batch_size]
+        mask: mask of output with shape of [max_seq_len, batch_size]
         max_target_len: max length of output sentences
     """
     pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)

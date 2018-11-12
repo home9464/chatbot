@@ -4,6 +4,12 @@ import torch.nn as nn
 
 class EncoderRNN(nn.Module):
     def __init__(self, hidden_size, embedding, n_layers=1, dropout=0):
+        """
+        Args:
+            hidden_size:size of hidden state
+            embedding: map each word to a vector with shape [hidden_size], number of features=hidden_size
+
+        """
         super(EncoderRNN, self).__init__()
         self.n_layers = n_layers
         self.hidden_size = hidden_size
@@ -15,6 +21,15 @@ class EncoderRNN(nn.Module):
                           dropout=(0 if n_layers == 1 else dropout), bidirectional=True)
 
     def forward(self, input_seq, input_lengths, hidden=None):
+        """
+        Args:
+            input_seq: input tensor with shape [max_length, batch_size]
+            input_lengths: length of each sentence in the batch, shape=[batch_size]
+            hidden: hidden state, shape=[n_layers*num_directions, batch_size, hidden_size]
+        Returns:
+            outputs: output of last hidden layer (sum of bidirectional outputs), shape=[max_length, batch_size, hidden_size]
+            hidden: updated hidden state, shape=[n_layers*num_directions, batch_size, hidden_size]
+        """
         # Convert word indexes to embeddings
         embedded = self.embedding(input_seq)
         # Pack padded batch of sequences for RNN module

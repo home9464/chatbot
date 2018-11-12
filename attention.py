@@ -13,10 +13,15 @@ class Attn(nn.Module):
         if self.method == 'general':
             self.attn = torch.nn.Linear(hidden_size, hidden_size)
         elif self.method == 'concat':
-            self.attn = torch.nn.Linear(pythhidden_size * 2, hidden_size)
+            self.attn = torch.nn.Linear(hidden_size * 2, hidden_size)
             self.v = torch.nn.Parameter(torch.FloatTensor(hidden_size))
 
     def dot_score(self, hidden, encoder_output):
+        """
+        Args:
+            hidden: current hidden state of decoder, shape=[max_seq_length, batch_size, hidden_size]
+
+        """
         return torch.sum(hidden * encoder_output, dim=2)
 
     def general_score(self, hidden, encoder_output):

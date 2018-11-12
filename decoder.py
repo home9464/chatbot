@@ -4,7 +4,14 @@ import torch.nn.functional as F
 from attention import Attn
 
 class LuongAttnDecoderRNN(nn.Module):
+    """feed batch one time step at a time.
+    """
     def __init__(self, attn_model, embedding, hidden_size, output_size, n_layers=1, dropout=0.1):
+        """
+        Args:
+            embedding: embedding of current input word, shape=[1, batch_size, hidden_size]
+            output_size: [1, batch_size, hidden_size]
+        """
         super(LuongAttnDecoderRNN, self).__init__()
 
         # Keep for reference
@@ -24,6 +31,15 @@ class LuongAttnDecoderRNN(nn.Module):
         self.attn = Attn(attn_model, hidden_size)
 
     def forward(self, input_step, last_hidden, encoder_outputs):
+        """
+        Args:
+            input_step: one word from input sequence with shape=[1, batch_size]
+            last_hidden: last hidden layer of GRU
+        Retunrs:
+            output: output with shape=[batch_size, voc.num_words]
+            hidden: shape=[n_layers* num_directions, batch_size, hidden_size]
+            
+        """
         # Note: we run this one step (word) at a time
         # Get embedding of current input word
         embedded = self.embedding(input_step)
