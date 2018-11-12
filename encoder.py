@@ -7,7 +7,7 @@ class EncoderRNN(nn.Module):
         """
         Args:
             hidden_size:size of hidden state
-            embedding: map each word to a vector with shape [hidden_size], number of features=hidden_size
+            embedding: torch.nn.Embedding, shape=[voc.num_words, hidden_size]
 
         """
         super(EncoderRNN, self).__init__()

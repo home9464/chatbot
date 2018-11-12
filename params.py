@@ -13,7 +13,6 @@ PAD_token = 0  # Used for padding short sentences
 SOS_token = 1  # Start-of-sentence token
 EOS_token = 2  # End-of-sentence token
 
-
 corpus_name = 'movie-dialogs'
 corpus = os.path.join('data', corpus_name)
 clip = 50.0

@@ -9,6 +9,7 @@ class LuongAttnDecoderRNN(nn.Module):
     def __init__(self, attn_model, embedding, hidden_size, output_size, n_layers=1, dropout=0.1):
         """
         Args:
+            attn_model: 'dot' or 'general' or ''
             embedding: embedding of current input word, shape=[1, batch_size, hidden_size]
             output_size: [1, batch_size, hidden_size]
         """

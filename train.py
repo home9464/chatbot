@@ -181,8 +181,8 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer,
 
 
 
-data_file = 'friends.tsv'
-#data_file = 'tableau.tsv'
+#data_file = 'friends.tsv'
+data_file = 'data/tableau.tsv'
 voc, pairs = loadPreparedData(data_file)
 
 print('Building encoder and decoder ...')
