@@ -115,6 +115,8 @@ def normalizeString(s):
 
 
 def indexesFromSentence(voc, sentence):
+    """convert a sentence into a list of ids
+    """
     return [voc.word2index[word] for word in sentence.split(' ')] + [params.EOS_token]
 
 
@@ -144,16 +146,16 @@ def binaryMatrix(padlist, value=params.PAD_token):
 def inputVar(sentences, voc):
     """
     Args:
-        sentences: ['sentence', ...]
+        sentences: ["I", "you do", "he likes that"]
         voc: instance of Vocabulary.Voc
 
     Returns:
-        padVar: [[1,2,4],
-                 [0,3,5],
-                 [0,0,6]]
-                note it is column-wised for each sentence, so 1st sentence is [1]
-                2nd sentence is [2,3] and 3rd sentence is [4,5,6]
-        lengths: [1,2,3]
+        padVar: tensor[ [1, 2, 4],
+                        [0, 3, 5],
+                        [0, 0, 6]]
+                note it is column-wised for each sentence, so 1st sentence is [1, 0, 0]
+                2nd sentence is [2,3,0] and 3rd sentence is [4,5,6]
+        lengths: [1, 2, 3]
     """
     #[[indices], [], ...]
     indexes_batch = [indexesFromSentence(voc, sentence) for sentence in sentences]
@@ -167,24 +169,42 @@ def inputVar(sentences, voc):
 def outputVar(sentences, voc):
     """get padded target sequence tensor, padding mask, and max target length
     Args:
-        sentences: ['sentence', ...]
+        sentences: ['I very like soccer', "you like food", "here there"]
+                    after encoding into id by word2index, above list will be like
+                    [[1,2,4,23], [3,4,5], [7,9]]
         voc: instance of Vocabulary.Voc
+    Returns:
+        padVar: tensor[ [1, 3, 7], [2, 4, 9], [4, 5, 0], [23, 0, 0]]
+        mask: tensor[ [1, 1, 1], [1, 1, 1], [1, 1, 0], [1, 0, 0]]
+        max_target_len: 4
     """
-    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in sentences]
-    max_target_len = max([len(indexes) for indexes in indexes_batch])
-    padList = zeroPadding(indexes_batch)
-    mask = binaryMatrix(padList)
+    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in sentences]  # [[1,2,4, 23], [3,4,5], [7,9]]
+    max_target_len = max([len(indexes) for indexes in indexes_batch])  # 4, num_rows
+    padList = zeroPadding(indexes_batch)  # [ [1,3,7], [2,4,9], [4,5,0], [23, 0, 0]]
+    mask = binaryMatrix(padList)# [ [1,1,1], [1,1,1], [1,1,0], [1, 0, 0]]
     mask = torch.ByteTensor(mask)
     padVar = torch.LongTensor(padList)
     return padVar, mask, max_target_len
 
 
 def batch2TrainData(voc, pair_batch):
+    """
+    Args:
+        voc: instance of Vocabulary.Voc
+        pair_batch: [[pair], [pair]. ,,,]
+    Returns:
+        inp: input/query with shape of [max_seq_len, num_sentences]
+        length: length of each sentence in input
+        ouput: output/response with shape of [max_seq_len, num_sentences]
+        mask: mask of output with shape of [max_seq_len, num_sentences]
+        max_target_len: max length of output sentences
+    """
     pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
     input_batch, output_batch = [], []
     for pair in pair_batch:
         input_batch.append(pair[0])
         output_batch.append(pair[1])
+    # padded [max_length, num_words]
     inp, lengths = inputVar(input_batch, voc)
     output, mask, max_target_len = outputVar(output_batch, voc)
     return inp, lengths, output, mask, max_target_len
