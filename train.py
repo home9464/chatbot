@@ -30,6 +30,16 @@ def train(input_variable, lengths, target_variable,
           encoder_optimizer, decoder_optimizer, batch_size, clip, 
           max_length=params.MAX_LENGTH):
     """
+    Args:
+        input_variable: tensor with shape of [max_sentence_len1, num_sentences1]
+        lengths: length of each sentence in input_variable, [1, 23, 14, ...]
+        target_variable:  tensor with shape of [max_sentence_len2, num_sentences2]
+        mask: tensor with shape of  [max_sentence_len2, num_sentences2]
+        max_target_len: max length of target sequence in target_variable
+        encoder: instance of encoder.Encoder
+        decoder: instance of decoder.Decoder
+        embedding: 
+
     """
     # Zero gradients
     encoder_optimizer.zero_grad()
