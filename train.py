@@ -132,6 +132,13 @@ def trainIters(voc, pairs, encoder, decoder, encoder_optimizer,
         pairs: [["A","B"], ["C", "D"], ...]
     """
     # Load batches for each iteration
+    #training_batches = []
+    #for _ in range(n_iteration):
+    #    random.shuffle(pairs)
+    #    num_total = len(pairs)
+    #    for i in range(0, num_total, batch_size):
+    #        training_batches.append(batch2TrainData(voc, pairs[i:i+batch_size]))
+
     training_batches = [batch2TrainData(voc, [random.choice(pairs) for _ in range(batch_size)])
                       for _ in range(n_iteration)]
 
@@ -146,6 +153,8 @@ def trainIters(voc, pairs, encoder, decoder, encoder_optimizer,
     print("Training...")
     for iteration in range(start_iteration, n_iteration + 1):
         training_batch = training_batches[iteration - 1]
+    #for iteration, training_batch in enumerate(training_batches):
+    #    print(iteration)
         # Extract fields from batch
         input_variable, lengths, target_variable, mask, max_target_len = training_batch
 
@@ -177,7 +186,7 @@ def trainIters(voc, pairs, encoder, decoder, encoder_optimizer,
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
 
 
-voc, pairs = loadPreparedData(params.data_file)
+voc, pairs = loadPreparedData()
 
 print('Building encoder and decoder ...')
 # Initialize word embeddings

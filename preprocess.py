@@ -113,7 +113,7 @@ def normalizeString(s):
     s = re.sub(r"\s+", r" ", s).strip()
     return s
 
-def normalizeResponseString(s):
+def normalizeStringSimple(s):
     """apply minimum filter on response(reply, answer)
     because the response is already strictly formatted
     """
@@ -255,7 +255,7 @@ def readVocs(datafile, corpus_name):
     """
     # each line is a pair of conversation
     lines = open(datafile, encoding='utf-8').read().strip().split('\n')
-    pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
+    pairs = [[normalizeStringSimple(s) for s in l.split('\t')] for l in lines]
     voc = Voc(corpus_name)
     return voc, pairs
 
@@ -281,7 +281,6 @@ def loadVocPair(corpus_name, datafile, save_dir):
     print("Read {!s} sentence pairs".format(len(pairs)))
     pairs = filterPairs(pairs)
     print("Trimmed to {!s} sentence pairs".format(len(pairs)))
-    print("Counting words...")
     for pair in pairs:
         voc.addSentence(pair[0])
         voc.addSentence(pair[1])
@@ -318,11 +317,9 @@ def trimRareWords(voc, pairs, MIN_COUNT):
     return keep_pairs
 
 
-def loadPreparedData(datafile=None):
+def loadPreparedData():
     """load paired conversation and convert into voc
     """
-    if datafile:
-        params.datafile = datafile
     if not os.path.exists(params.data_file):
         preprocess()
     voc, pairs = loadVocPair(params.corpus_name,

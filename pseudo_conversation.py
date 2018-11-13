@@ -2,6 +2,11 @@
 """
 import os
 import random
+import sys
+import params
+INT_MAX = sys.maxsize
+INT_MIN = -INT_MAX
+
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(base_dir, 'tableau.tsv')
@@ -31,4 +36,20 @@ def generate_pesudo_conversations(datafile):
     with open(datafile, 'w', encoding='utf-8') as outputfile:
         #writer = csv.writer(outputfile, delimiter=delimiter)
         outputfile.writelines(pairs)
-generate_pesudo_conversations(datafile)
+#generate_pesudo_conversations(datafile)
+
+
+def generate_additive(datafile):
+    RANGE = 100
+    duplicates = 1
+    pairs = []
+    for i in range(RANGE):
+        for j in range(RANGE):
+            for _ in range(duplicates):
+                _sum = i + j
+                pairs.append('{} + {}\t{}\n'.format(i, j, _sum))
+    print("\nWriting newly formatted file...")
+    with open(datafile, 'w', encoding='utf-8') as outputfile:
+        #writer = csv.writer(outputfile, delimiter=delimiter)
+        outputfile.writelines(pairs)
+generate_additive(datafile=os.path.join(params.data_dir, "{}.tsv".format('math_add')))

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import params
 
-from preprocess import loadPreparedData, indexesFromSentence, normalizeString
+from preprocess import loadPreparedData, indexesFromSentence, normalizeStringSimple
 from encoder import EncoderRNN
 from decoder import LuongAttnDecoderRNN
 from search import GreedySearchDecoder
@@ -43,7 +43,7 @@ def evaluateInput(encoder, decoder, searcher, voc):
             # Check if it is quit case
             if input_sentence == 'q' or input_sentence == 'quit': break
             # Normalize sentence
-            input_sentence = normalizeString(input_sentence)
+            input_sentence = normalizeStringSimple(input_sentence)
             # Evaluate sentence
             output_words = evaluate(encoder, decoder, searcher, voc, input_sentence)
             # Format and print response sentence
@@ -64,9 +64,9 @@ def get_lastest_model_file():
     else:
         raise Exception("Could not find any models under {}".format(os.path.join(params.save_dir, params.corpus_name)))
 
-print('Load model ...')
-voc, pairs = loadPreparedData()
 loadFilename = get_lastest_model_file()
+print('Load model: {} from {}'.format(params.corpus_name, loadFilename))
+voc, pairs = loadPreparedData()
 # If loading on same machine the model was trained on
 checkpoint = torch.load(loadFilename)
 # If loading a model trained on GPU to CPU
