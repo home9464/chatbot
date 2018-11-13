@@ -54,18 +54,19 @@ def evaluateInput(encoder, decoder, searcher, voc):
             print("Error: Encountered unknown word.")
 
 
-print('Load vocabulary ...')
+def get_lastest_model_file():
+    model_subdir = '{}-{}_{}'.format(params.encoder_n_layers, params.decoder_n_layers, params.hidden_size)
+    saved_model_dir = os.path.join(params.save_dir, params.corpus_name, model_subdir)
+    tar_files = [os.path.join(saved_model_dir, f) for f in os.listdir(saved_model_dir) if f.endswith('_checkpoint.tar')]
+    if tar_files:
+        tar_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        return tar_files[0]
+    else:
+        raise Exception("Could not find any models under {}".format(os.path.join(params.save_dir, params.corpus_name)))
+
+print('Load model ...')
 voc, pairs = loadPreparedData()
-
-# Set dropout layers to eval modeloadFilename = None
-#checkpoint_iter = params.n_iteration
-checkpoint_iter = 1600
-loadFilename = os.path.join(params.save_dir,
-                            params.model_name,
-                            params.corpus_name,
-                            '{}-{}_{}'.format(params.encoder_n_layers, params.decoder_n_layers, params.hidden_size),
-                            '{}_checkpoint.tar'.format(checkpoint_iter))
-
+loadFilename = get_lastest_model_file()
 # If loading on same machine the model was trained on
 checkpoint = torch.load(loadFilename)
 # If loading a model trained on GPU to CPU
@@ -76,16 +77,11 @@ encoder_optimizer_sd = checkpoint['en_opt']
 decoder_optimizer_sd = checkpoint['de_opt']
 embedding_sd = checkpoint['embedding']
 voc.__dict__ = checkpoint['voc_dict']
-
-
-print('Load encoder and decoder ...')
-# Initialize word embeddings
 embedding = nn.Embedding(voc.num_words, params.hidden_size)
 if loadFilename:
     embedding.load_state_dict(embedding_sd)
-# Initialize encoder & decoder models
 encoder = EncoderRNN(params.hidden_size, embedding, params.encoder_n_layers, params.dropout)
-decoder = LuongAttnDecoderRNN(params.attn_model, 
+decoder = LuongAttnDecoderRNN(params.attn_model,
                               embedding,
                               params.hidden_size,
                               voc.num_words,
@@ -97,15 +93,8 @@ if loadFilename:
 # Use appropriate device
 encoder = encoder.to(params.device)
 decoder = decoder.to(params.device)
-
-
 encoder.eval()
 decoder.eval()
-
-# Initialize search module
 searcher = GreedySearchDecoder(encoder, decoder)
-
-# Begin chatting (uncomment and run the following line to begin)
 print('Bot is ready')
-
 evaluateInput(encoder, decoder, searcher, voc)

@@ -27,18 +27,21 @@ class EncoderRNN(nn.Module):
             input_lengths: length of each sentence in the batch, shape=[batch_size]
             hidden: hidden state, shape=[n_layers*num_directions, batch_size, hidden_size]
         Returns:
-            outputs: output of last hidden layer (sum of bidirectional outputs), shape=[max_length, batch_size, hidden_size]
+            outputs: output of last hidden layer (sum of bidirectional outputs),
+                     shape=[max_length, batch_size, hidden_size]
             hidden: updated hidden state, shape=[n_layers*num_directions, batch_size, hidden_size]
         """
         # Convert word indexes to embeddings
-        embedded = self.embedding(input_seq)
+        embedded = self.embedding(input_seq)  # shape: [max_length, batch_size, num_features]
         # Pack padded batch of sequences for RNN module
         packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_lengths)
         # Forward pass through GRU
+        # hidden: [4, batch_size, feature_size]
         outputs, hidden = self.gru(packed, hidden)
         # Unpack padding
         outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs)
         # Sum bidirectional GRU outputs
+        # outputs: [8, batch_size, feature_size]
         outputs = outputs[:, :, :self.hidden_size] + outputs[:, : , self.hidden_size:]
         # Return output and final hidden state
         return outputs, hidden

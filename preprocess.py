@@ -35,7 +35,7 @@ def loadConversations(fileName, lines, fields):
     Args:
         fileName: each line has a format like
                   u0 +++$+++ u2 +++$+++ m0 +++$+++ ['L194', 'L195', 'L196', 'L197']
-        lines: 
+        lines:
             ["lineID", "characterID", "movieID", "character", "text"]
             L1045 +++$+++ u0 +++$+++ m0 +++$+++ BIANCA +++$+++ They do not!
         fields: ["character1ID", "character2ID", "movieID", "utteranceIDs"]
@@ -113,11 +113,17 @@ def normalizeString(s):
     s = re.sub(r"\s+", r" ", s).strip()
     return s
 
+def normalizeResponseString(s):
+    """apply minimum filter on response(reply, answer)
+    because the response is already strictly formatted
+    """
+    s = unicodeToAscii(s.lower().strip())
+    return s
 
-def indexesFromSentence(voc, sentence):
+def indexesFromSentence(voc, sentence, limiter=' '):
     """convert a sentence into a list of ids
     """
-    return [voc.word2index[word] for word in sentence.split(' ')] + [params.EOS_token]
+    return [voc.word2index[word] for word in sentence.split(limiter)] + [params.EOS_token]
 
 
 def zeroPadding(indices, fillvalue=params.PAD_token):
@@ -236,11 +242,11 @@ def preprocess(delimiter='\t'):
 
     # Write new csv file
     print("\nWriting newly formatted file...")
-    with open(params.datafile, 'w', encoding='utf-8') as outputfile:
+    with open(params.data_file, 'w', encoding='utf-8') as outputfile:
         writer = csv.writer(outputfile, delimiter=delimiter)
         for pair in extractSentencePairs(conversations):
             writer.writerow(pair)
-    #return datafile
+    #return data_file
 
 
 
@@ -267,7 +273,7 @@ def filterPairs(pairs):
     return [pair for pair in pairs if filterPair(pair)]
 
 
-def loadVocPair(corpus, corpus_name, datafile, save_dir):
+def loadVocPair(corpus_name, datafile, save_dir):
     """return a populated voc object and pairs list
     """
     print("Start preparing training data ...")
@@ -317,10 +323,11 @@ def loadPreparedData(datafile=None):
     """
     if datafile:
         params.datafile = datafile
-    if not os.path.exists(params.datafile):
+    if not os.path.exists(params.data_file):
         preprocess()
-    voc, pairs = loadVocPair(params.corpus, params.corpus_name, 
-                             params.datafile, params.save_dir)
+    voc, pairs = loadVocPair(params.corpus_name,
+                             params.data_file,
+                             params.save_dir)
     # Trim voc and pairs
     pairs = trimRareWords(voc, pairs, params.MIN_COUNT)
 

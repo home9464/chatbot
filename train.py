@@ -16,7 +16,7 @@ import params
 def maskNLLLoss(inp, target, mask):
     """
     Args:
-    
+
     """
     nTotal = mask.sum()
     crossEntropy = -torch.log(torch.gather(inp, 1, target.view(-1, 1)))
@@ -25,9 +25,9 @@ def maskNLLLoss(inp, target, mask):
     return loss, nTotal.item()
 
 
-def train(input_variable, lengths, target_variable, 
+def train(input_variable, lengths, target_variable,
           mask, max_target_len, encoder, decoder, embedding,
-          encoder_optimizer, decoder_optimizer, batch_size, clip, 
+          encoder_optimizer, decoder_optimizer, batch_size, clip,
           max_length=params.MAX_LENGTH):
     """
     Args:
@@ -38,7 +38,7 @@ def train(input_variable, lengths, target_variable,
         max_target_len: max length of target sequence in target_variable
         encoder: instance of encoder.Encoder
         decoder: instance of decoder.Decoder
-        embedding: 
+        embedding:
 
     """
     # Zero gradients
@@ -56,7 +56,7 @@ def train(input_variable, lengths, target_variable,
     print_losses = []
     n_totals = 0
 
-    # Forward pass through encoder
+    # encoder_outputs [max_sent_len, batch_size, hidden_size], encoder_hidden: [num_layers*num_directions , batch_size, hidden_size]
     encoder_outputs, encoder_hidden = encoder(input_variable, lengths)
 
     # Create initial decoder input (start with SOS tokens for each sentence)
@@ -68,7 +68,7 @@ def train(input_variable, lengths, target_variable,
 
     # Determine if we are using teacher forcing this iteration
     use_teacher_forcing = True if random.random() < params.teacher_forcing_ratio else False
-
+    use_teacher_forcing = False
     # Forward batch of sequences through decoder one time step at a time
     if use_teacher_forcing:
         for t in range(max_target_len):
@@ -123,12 +123,11 @@ def train(input_variable, lengths, target_variable,
 # to run inference, or we can continue training right where we left off.
 #
 
-def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, 
-    ecoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir, 
+def trainIters(voc, pairs, encoder, decoder, encoder_optimizer,
+    ecoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir,
     n_iteration, batch_size, print_every, save_every, clip, corpus_name, loadFilename):
     """
     Args:
-        model_name: string, "cb_model"
         voc: instance of vocabulary.Voc
         pairs: [["A","B"], ["C", "D"], ...]
     """
@@ -163,9 +162,7 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer,
 
         # Save checkpoint
         if (iteration % save_every == 0):
-            #fn = os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint'))
-            #print(fn)
-            directory = os.path.join(save_dir, model_name, corpus_name, '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, params.hidden_size))
+            directory = os.path.join(save_dir, corpus_name, '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, params.hidden_size))
             if not os.path.exists(directory):
                 os.makedirs(directory)
             torch.save({
@@ -180,18 +177,19 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer,
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
 
 
-
-#data_file = 'friends.tsv'
-data_file = 'data/tableau.tsv'
-voc, pairs = loadPreparedData(data_file)
+voc, pairs = loadPreparedData(params.data_file)
 
 print('Building encoder and decoder ...')
 # Initialize word embeddings
 embedding = nn.Embedding(voc.num_words, params.hidden_size)
 
 # Initialize encoder & decoder models
-encoder = EncoderRNN(params.hidden_size, embedding, params.encoder_n_layers, params.dropout)
-decoder = LuongAttnDecoderRNN(params.attn_model, 
+encoder = EncoderRNN(params.hidden_size,
+                     embedding,
+                     params.encoder_n_layers,
+                     params.dropout)
+
+decoder = LuongAttnDecoderRNN(params.attn_model,
                               embedding,
                               params.hidden_size,
                               voc.num_words,
@@ -209,17 +207,17 @@ decoder.train()
 # Initialize optimizers
 print('Building optimizers ...')
 encoder_optimizer = optim.Adam(encoder.parameters(), lr=params.learning_rate)
-decoder_optimizer = optim.Adam(decoder.parameters(), 
+decoder_optimizer = optim.Adam(decoder.parameters(),
                                lr=params.learning_rate * params.decoder_learning_ratio)
 
 # Run training iterations
 print("Starting Training!")
-trainIters(params.model_name, voc, pairs, encoder, decoder, 
+trainIters(voc, pairs, encoder, decoder,
            encoder_optimizer, decoder_optimizer,
            embedding,
-           params.encoder_n_layers, params.decoder_n_layers, params.save_dir, 
+           params.encoder_n_layers,
+           params.decoder_n_layers,
+           params.save_dir,
            params.n_iteration, params.batch_size,
-           params.print_every, params.save_every, 
+           params.print_every, params.save_every,
            params.clip, params.corpus_name, loadFilename=None)
-
-

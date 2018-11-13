@@ -11,7 +11,8 @@ class LuongAttnDecoderRNN(nn.Module):
         Args:
             attn_model: 'dot' or 'general' or ''
             embedding: embedding of current input word, shape=[1, batch_size, hidden_size]
-            output_size: [1, batch_size, hidden_size]
+            hidden_size: scalar, default 500
+            output_size: vocabulary.num_words
         """
         super(LuongAttnDecoderRNN, self).__init__()
 
@@ -43,17 +44,20 @@ class LuongAttnDecoderRNN(nn.Module):
         """
         # Note: we run this one step (word) at a time
         # Get embedding of current input word
-        embedded = self.embedding(input_step)
+        embedded = self.embedding(input_step)  # [1, batch_size, feature_size]
         embedded = self.embedding_dropout(embedded)
         # Forward through unidirectional GRU
+        # rnn_output: [1, batch_size, hidden_size], hidden: [2, batch_size, hidden_size]
         rnn_output, hidden = self.gru(embedded, last_hidden)
         # Calculate attention weights from the current GRU output
+        #encoder_outputs: [max_sent_len, batch_size, hidden_size]
+        # attn_weights: [batch_size, 1, max_sent_length]
         attn_weights = self.attn(rnn_output, encoder_outputs)
         # Multiply attention weights to encoder outputs to get new "weighted sum" context vector
-        context = attn_weights.bmm(encoder_outputs.transpose(0, 1))
+        context = attn_weights.bmm(encoder_outputs.transpose(0, 1))  # [batch_size, 1, hidden_size]
         # Concatenate weighted context vector and GRU output using Luong eq. 5
-        rnn_output = rnn_output.squeeze(0)
-        context = context.squeeze(1)
+        rnn_output = rnn_output.squeeze(0)  # [1, batch_size, hidden_size] -> [batch_size, hidden_size]
+        context = context.squeeze(1)  # [batch_size, 1, hidden_size] -> [batch_size, hidden_size]
         concat_input = torch.cat((rnn_output, context), 1)
         concat_output = torch.tanh(self.concat(concat_input))
         # Predict next word using Luong eq. 6

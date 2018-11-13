@@ -10,11 +10,22 @@ def generate_pesudo_conversations(datafile):
     pairs = []
     q = ['what is the uptime of tableau server',
         'uptime of tableau server',
+        'uptime of tableau service',
+        'uptime tableau',
         'uptime of tableau',
-        'tableau uptime',
-        'tableau']
+        'tableau uptime']
     for i in range(1, 10000):
-        line = "{}\t\{}\n".format(random.choice(q), 'select uptime from table where service="tableu"')
+        line = "{}\t\{}\n".format(random.choice(q), 'service(uptime,tableau)')
+        pairs.append(line)
+
+    q = ['what is the uptime of gpdb server',
+        'uptime of gpdb server',
+        'uptime of gpdb service',
+        'uptime gpdb',
+        'uptime of gpdb',
+        'gpdb uptime']
+    for i in range(1, 10000):
+        line = "{}\t\{}\n".format(random.choice(q), 'service(uptime,gpdb)')
         pairs.append(line)
     print("\nWriting newly formatted file...")
     with open(datafile, 'w', encoding='utf-8') as outputfile:
