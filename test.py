@@ -1,13 +1,28 @@
 import os
 import torch
 import torch.nn as nn
-import params
-print(torch.nn.Embedding(100, 256))
-model_subdir = '{}-{}_{}'.format(params.encoder_n_layers, params.decoder_n_layers, params.hidden_size)
-saved_model_dir = os.path.join(params.save_dir, params.corpus_name, model_subdir)
-tar_files = [os.path.join(saved_model_dir, f) for f in os.listdir(saved_model_dir) if f.endswith('_checkpoint.tar')]
-tar_files.sort(key=lambda x: os.path.getmtime(x))
-print(tar_files)
+from torch.autograd import Variable
 
-#                            ,
-#                            '{}_checkpoint.tar'.format(checkpoint_iter))
+batch_size = 3
+max_length = 3
+hidden_size = 2
+n_layers =1
+num_input_features = 1
+vocab_size = 7
+embedding_size = 5
+#input_tensor = torch.zeros(batch_size, max_length)
+#input_tensor[0] = torch.LongTensor([1, 2, 3])
+#input_tensor[1] = torch.LongTensor([4, 5, 0])
+#input_tensor[2] = torch.LongTensor([6, 0, 0])
+
+input_tensor = torch.LongTensor([[1, 2, 3, 4],
+                             [4, 5, 4, 0],
+                             [6, 1, 0, 0]])
+
+embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=embedding_size)
+embedded = embedding(input_tensor)
+print(embedded)
+
+seq_lengths = [4, 3, 2]
+pack = torch.nn.utils.rnn.pack_padded_sequence(embedded, seq_lengths, batch_first=True)
+print(pack)

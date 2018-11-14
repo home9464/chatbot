@@ -26,7 +26,8 @@ def maskNLLLoss(inp, target, mask):
 
 
 def train(input_variable, lengths, target_variable,
-          mask, max_target_len, encoder, decoder, embedding,
+          mask, max_target_len, encoder, decoder,
+          embedding,
           encoder_optimizer, decoder_optimizer, batch_size, clip,
           max_length=params.MAX_LENGTH):
     """
@@ -38,7 +39,7 @@ def train(input_variable, lengths, target_variable,
         max_target_len: max length of target sequence in target_variable
         encoder: instance of encoder.Encoder
         decoder: instance of decoder.Decoder
-        embedding:
+        embedding: instane of torch.nn.Embedding
 
     """
     # Zero gradients
@@ -56,7 +57,8 @@ def train(input_variable, lengths, target_variable,
     print_losses = []
     n_totals = 0
 
-    # encoder_outputs [max_sent_len, batch_size, hidden_size], encoder_hidden: [num_layers*num_directions , batch_size, hidden_size]
+    # encoder_outputs [seq_len, batch_size, hidden_size],
+    # encoder_hidden: [num_layers*num_directions , batch_size, hidden_size]
     encoder_outputs, encoder_hidden = encoder(input_variable, lengths)
 
     # Create initial decoder input (start with SOS tokens for each sentence)
@@ -124,12 +126,29 @@ def train(input_variable, lengths, target_variable,
 #
 
 def trainIters(voc, pairs, encoder, decoder, encoder_optimizer,
-    ecoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir,
-    n_iteration, batch_size, print_every, save_every, clip, corpus_name, loadFilename):
+               decoder_optimizer, embedding, encoder_n_layers, decoder_n_layers,
+               save_dir, n_iteration, batch_size, print_every, save_every, clip,
+               corpus_name, load_filename):
     """
     Args:
         voc: instance of vocabulary.Voc
         pairs: [["A","B"], ["C", "D"], ...]
+        encoder: instance of encoder.EncoderRNN
+        decoder: instance of decoder.LuongAttnDecoderRNN
+        encoder_optimizer: torch.optim.Adam
+        decoder_optimizer: torch.optim.Adam
+        embedding: torch.nn.Embedding
+        encoder_n_layers: number of layers for encoder
+        decoder_n_layers: number of layers for decoder
+        save_dir: the full directory to save model onto
+        n_iteration: int, how many iteration to shuffle and sample(batch_size) to generate train data
+        batch_size: int
+        print_every: int, how frequent to print message at specified interval
+        save_every: int, how frequent to save model as .tar file
+        clip: clip gradients
+        corpus_name:
+        load_filename: saved model name
+
     """
     # Load batches for each iteration
     #training_batches = []
@@ -146,7 +165,7 @@ def trainIters(voc, pairs, encoder, decoder, encoder_optimizer,
     print('Initializing ...')
     start_iteration = 1
     print_loss = 0
-    if loadFilename:
+    if load_filename:
         start_iteration = checkpoint['iteration'] + 1
 
     # Training loop
@@ -155,21 +174,14 @@ def trainIters(voc, pairs, encoder, decoder, encoder_optimizer,
         training_batch = training_batches[iteration - 1]
     #for iteration, training_batch in enumerate(training_batches):
     #    print(iteration)
-        # Extract fields from batch
         input_variable, lengths, target_variable, mask, max_target_len = training_batch
-
-        # Run a training iteration with batch
         loss = train(input_variable, lengths, target_variable, mask, max_target_len, encoder,
                      decoder, embedding, encoder_optimizer, decoder_optimizer, batch_size, clip)
         print_loss += loss
-
-        # Print progress
         if iteration % print_every == 0:
             print_loss_avg = print_loss / print_every
             print("Iteration: {}; Percent complete: {:.1f}%; Average loss: {:.4f}".format(iteration, iteration / n_iteration * 100, print_loss_avg))
             print_loss = 0
-
-        # Save checkpoint
         if (iteration % save_every == 0):
             directory = os.path.join(save_dir, corpus_name, '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, params.hidden_size))
             if not os.path.exists(directory):
@@ -186,47 +198,51 @@ def trainIters(voc, pairs, encoder, decoder, encoder_optimizer,
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
 
 
-voc, pairs = loadPreparedData()
+def main():
+    """primary entry
+    """
+    voc, pairs = loadPreparedData()
+    print('Building encoder and decoder ...')
+    # Initialize word embeddings
+    #embedding = nn.Embedding(voc.num_words, params.hidden_size)
+    embedding = nn.Embedding(voc.num_words, params.embedding_size)
+    # Initialize encoder & decoder models
+    encoder = EncoderRNN(embedding,
+                         params.hidden_size,
+                         params.encoder_n_layers,
+                         params.dropout)
+    decoder = LuongAttnDecoderRNN(params.attn_model,
+                                  embedding,
+                                  params.hidden_size,
+                                  voc.num_words,
+                                  params.decoder_n_layers,
+                                  params.dropout)
+    # Use appropriate device
+    encoder = encoder.to(params.device)
+    decoder = decoder.to(params.device)
+    print('Models built and ready to go!')
 
-print('Building encoder and decoder ...')
-# Initialize word embeddings
-embedding = nn.Embedding(voc.num_words, params.hidden_size)
+    # Ensure dropout layers are in train mode
+    encoder.train()
+    decoder.train()
 
-# Initialize encoder & decoder models
-encoder = EncoderRNN(params.hidden_size,
-                     embedding,
-                     params.encoder_n_layers,
-                     params.dropout)
-
-decoder = LuongAttnDecoderRNN(params.attn_model,
-                              embedding,
-                              params.hidden_size,
-                              voc.num_words,
-                              params.decoder_n_layers,
-                              params.dropout)
-# Use appropriate device
-encoder = encoder.to(params.device)
-decoder = decoder.to(params.device)
-print('Models built and ready to go!')
-
-# Ensure dropout layers are in train mode
-encoder.train()
-decoder.train()
-
-# Initialize optimizers
-print('Building optimizers ...')
-encoder_optimizer = optim.Adam(encoder.parameters(), lr=params.learning_rate)
-decoder_optimizer = optim.Adam(decoder.parameters(),
+    # Initialize optimizers
+    print('Building optimizers ...')
+    encoder_optimizer = optim.Adam(encoder.parameters(), lr=params.learning_rate)
+    decoder_optimizer = optim.Adam(decoder.parameters(),
                                lr=params.learning_rate * params.decoder_learning_ratio)
 
-# Run training iterations
-print("Starting Training!")
-trainIters(voc, pairs, encoder, decoder,
-           encoder_optimizer, decoder_optimizer,
-           embedding,
-           params.encoder_n_layers,
-           params.decoder_n_layers,
-           params.save_dir,
-           params.n_iteration, params.batch_size,
-           params.print_every, params.save_every,
-           params.clip, params.corpus_name, loadFilename=None)
+    # Run training iterations
+    print("Starting Training!")
+    trainIters(voc, pairs, encoder, decoder,
+               encoder_optimizer, decoder_optimizer,
+               embedding,
+               params.encoder_n_layers,
+               params.decoder_n_layers,
+               params.save_dir,
+               params.n_iteration, params.batch_size,
+               params.print_every, params.save_every,
+               params.clip, params.corpus_name, load_filename=None)
+
+if __name__ == '__main__':
+    main()
