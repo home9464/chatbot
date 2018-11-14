@@ -45,9 +45,10 @@ def generate_additive(datafile):
     pairs = []
     for i in range(RANGE):
         for j in range(RANGE):
-            for _ in range(duplicates):
-                _sum = i + j
-                pairs.append('{} + {}\t{}\n'.format(i, j, _sum))
+            x = ' '.join([_ for _ in str(i)])
+            y = ' '.join([_ for _ in str(j)])
+            _sum = ' '.join([_ for _ in str(i+j)])
+            pairs.append('{} + {}\t{}\n'.format(x, y, _sum))
     print("\nWriting newly formatted file...")
     with open(datafile, 'w', encoding='utf-8') as outputfile:
         #writer = csv.writer(outputfile, delimiter=delimiter)

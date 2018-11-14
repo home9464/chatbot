@@ -113,12 +113,21 @@ def normalizeString(s):
     s = re.sub(r"\s+", r" ", s).strip()
     return s
 
-def normalizeStringSimple(s):
+def normalizeSimpleString(s):
     """apply minimum filter on response(reply, answer)
     because the response is already strictly formatted
     """
     s = unicodeToAscii(s.lower().strip())
     return s
+
+def normalizeMathString(s):
+    """
+    '12 +   13' -> '1 2 + 1 3'
+    '1+15' -> '1 + 1 5'
+    """
+    s = unicodeToAscii(s.lower().strip())
+    s = re.sub(r"\s+", r"", s).strip()  # remove any spaces
+    return ' '.join([_ for _ in s])
 
 def indexesFromSentence(voc, sentence, limiter=' '):
     """convert a sentence into a list of ids
@@ -255,7 +264,10 @@ def readVocs(datafile, corpus_name):
     """
     # each line is a pair of conversation
     lines = open(datafile, encoding='utf-8').read().strip().split('\n')
-    pairs = [[normalizeStringSimple(s) for s in l.split('\t')] for l in lines]
+    #if corpus_name == 'math_add':
+    #    pairs = [[normalizeMathString(s) for s in l.split('\t')] for l in lines]
+    #else:
+    pairs = [[normalizeSimpleString(s) for s in l.split('\t')] for l in lines]
     voc = Voc(corpus_name)
     return voc, pairs
 

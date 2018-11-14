@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import params
 
-from preprocess import loadPreparedData, indexesFromSentence, normalizeStringSimple
+from preprocess import loadPreparedData, indexesFromSentence, normalizeSimpleString, normalizeMathString
 from encoder import EncoderRNN
 from decoder import LuongAttnDecoderRNN
 from search import GreedySearchDecoder
@@ -43,12 +43,15 @@ def evaluateInput(encoder, decoder, searcher, voc):
             # Check if it is quit case
             if input_sentence == 'q' or input_sentence == 'quit': break
             # Normalize sentence
-            input_sentence = normalizeStringSimple(input_sentence)
+            if params.corpus_name == 'math_add':
+                input_sentence = normalizeMathString(input_sentence)
+            else:
+                input_sentence = normalizeSimpleString(input_sentence)
             # Evaluate sentence
             output_words = evaluate(encoder, decoder, searcher, voc, input_sentence)
             # Format and print response sentence
             output_words[:] = [x for x in output_words if not (x == 'EOS' or x == 'PAD')]
-            print('Bot:', ' '.join(output_words))
+            print('Bot:', ''.join(output_words))
 
         except KeyError:
             print("Error: Encountered unknown word.")
@@ -77,10 +80,10 @@ encoder_optimizer_sd = checkpoint['en_opt']
 decoder_optimizer_sd = checkpoint['de_opt']
 embedding_sd = checkpoint['embedding']
 voc.__dict__ = checkpoint['voc_dict']
-embedding = nn.Embedding(voc.num_words, params.hidden_size)
+embedding = nn.Embedding(voc.num_words, params.embedding_size)
 if loadFilename:
     embedding.load_state_dict(embedding_sd)
-encoder = EncoderRNN(params.hidden_size, embedding, params.encoder_n_layers, params.dropout)
+encoder = EncoderRNN(embedding, params.hidden_size, params.encoder_n_layers, params.dropout)
 decoder = LuongAttnDecoderRNN(params.attn_model,
                               embedding,
                               params.hidden_size,
