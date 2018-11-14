@@ -19,10 +19,13 @@ input_tensor = torch.LongTensor([[1, 2, 3, 4],
                              [4, 5, 4, 0],
                              [6, 1, 0, 0]])
 
+_, topi = input_tensor.topk(1)
+z = [[topi[i][0] for i in range(3)]]
+print(z)
 embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=embedding_size)
 embedded = embedding(input_tensor)
-print(embedded)
+#print(embedded)
 
 seq_lengths = [4, 3, 2]
 pack = torch.nn.utils.rnn.pack_padded_sequence(embedded, seq_lengths, batch_first=True)
-print(pack)
+#print(pack)

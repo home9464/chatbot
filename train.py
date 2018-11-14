@@ -14,12 +14,22 @@ import params
 
 
 def maskNLLLoss(inp, target, mask):
-    """
-    Args:
+    """to calculate loss correctly, mask is needed to count number of valid tokens
+    e.g. [12, 23, 14, 0, 0] when batch_size = 5
+    the mask will be [1, 1, 1, 0, 0] which means only the 3 valid losses,
+    so the total loss will be calculated with 3, not 5
 
+    Args:
+        inp: input (predicted result) with shape=[batch_size, vocab_size]
+        target: the true word with shape=[batch_size]
+        mask: the mask with shape=[batch_size]. e.g [1,1,1,0,0, ...]
+    Returns:
+        loss: the loss value, shape=[1]
+        nTotal: number of valid words in the inp
     """
-    nTotal = mask.sum()
+    nTotal = mask.sum()  # number of words
     crossEntropy = -torch.log(torch.gather(inp, 1, target.view(-1, 1)))
+    # get the mean with masked results
     loss = crossEntropy.masked_select(mask).mean()
     loss = loss.to(params.device)
     return loss, nTotal.item()
@@ -32,9 +42,9 @@ def train(input_variable, lengths, target_variable,
           max_length=params.MAX_LENGTH):
     """
     Args:
-        input_variable: tensor with shape of [max_sentence_len1, num_sentences1]
+        input_variable: tensor with shape of [max_sentence_len1, batch_size]
         lengths: length of each sentence in input_variable, [1, 23, 14, ...]
-        target_variable:  tensor with shape of [max_sentence_len2, num_sentences2]
+        target_variable:  tensor with shape of [max_sentence_len2, batch_size]
         mask: tensor with shape of  [max_sentence_len2, num_sentences2]
         max_target_len: max length of target sequence in target_variable
         encoder: instance of encoder.Encoder
@@ -86,11 +96,14 @@ def train(input_variable, lengths, target_variable,
             n_totals += nTotal
     else:
         for t in range(max_target_len):
+
             decoder_output, decoder_hidden = decoder(
                 decoder_input, decoder_hidden, encoder_outputs
-            )
+            )  # decoder_output: [batch_size, vocab_size]
             # No teacher forcing: next input is decoder's own current output
+            # for each batch, the index of highest probability
             _, topi = decoder_output.topk(1)
+            # select the best word as input for generating next word
             decoder_input = torch.LongTensor([[topi[i][0] for i in range(batch_size)]])
             decoder_input = decoder_input.to(params.device)
             # Calculate and accumulate loss
