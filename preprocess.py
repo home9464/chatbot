@@ -343,3 +343,40 @@ def loadPreparedData():
     #batches = batch2TrainData(voc, [random.choice(pairs) for _ in range(params.BATCH_SIZE)])
     #input_variable, lengths, target_variable, mask, max_target_len = batches
     return voc, pairs
+
+
+def load_checkpoint(ckpt_filename, vocabulary):
+    """torch.save({
+                'iteration': iteration,
+                'en': encoder.state_dict(),
+                'de': decoder.state_dict(),
+                'en_opt': encoder_optimizer.state_dict(),
+                'de_opt': decoder_optimizer.state_dict(),
+                'loss': loss,
+                'voc_dict': voc.__dict__,
+                'embedding': embedding.state_dict()
+            }
+    """
+    embedding = nn.Embedding(voc.num_words, hidden_size)
+
+    # If loading on same machine the model was trained on
+    checkpoint = torch.load(ckpt_filename)
+    # If loading a model trained on GPU to CPU
+    #checkpoint = torch.load(ckpt_filename, map_location=torch.device('cpu'))
+    encoder_sd = checkpoint['en']
+    decoder_sd = checkpoint['de']
+    encoder_optimizer_sd = checkpoint['en_opt']
+    decoder_optimizer_sd = checkpoint['de_opt']
+    embedding_sd = checkpoint['embedding']
+    vocabulary.__dict__ = checkpoint['voc_dict']
+    embedding.load_state_dict(embedding_sd)
+
+    # Initialize encoder & decoder models
+    encoder = EncoderRNN(hidden_size, embedding, encoder_n_layers, dropout)
+    decoder = LuongAttnDecoderRNN(attn_model, embedding, hidden_size, voc.num_words, decoder_n_layers, dropout)
+    encoder.load_state_dict(encoder_sd)
+    decoder.load_state_dict(decoder_sd)
+    # Use appropriate device
+    encoder = encoder.to(device)
+    decoder = decoder.to(device)
+    print('Models built and ready to go!')

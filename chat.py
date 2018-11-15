@@ -51,10 +51,10 @@ def evaluateInput(encoder, decoder, searcher, voc):
             output_words = evaluate(encoder, decoder, searcher, voc, input_sentence)
             # Format and print response sentence
             output_words[:] = [x for x in output_words if not (x == 'EOS' or x == 'PAD')]
-            print('Bot:', ''.join(output_words))
+            print('Bot:', ' '.join(output_words))
 
         except KeyError:
-            print("Error: Encountered unknown word.")
+            print('Bot:', "Sorry I do not understand that")
 
 
 def get_lastest_model_file():

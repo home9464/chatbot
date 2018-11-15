@@ -80,7 +80,7 @@ def train(input_variable, lengths, target_variable,
 
     # Determine if we are using teacher forcing this iteration
     use_teacher_forcing = True if random.random() < params.teacher_forcing_ratio else False
-    use_teacher_forcing = False
+    #use_teacher_forcing = False
     # Forward batch of sequences through decoder one time step at a time
     if use_teacher_forcing:
         for t in range(max_target_len):

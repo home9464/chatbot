@@ -11,8 +11,9 @@ SOS_token = 1  # Start-of-sentence token
 EOS_token = 2  # End-of-sentence token
 
 #corpus_name = 'tableau'  # change this to use different datasets
-corpus_name = 'math_add'  # change this to use different datasets
-#corpus_name = 'movie'  # change this to use different datasets
+#corpus_name = 'math_add'  # change this to use different datasets
+corpus_name = 'movie'  # change this to use different datasets
+#corpus_name = 'friends'  # change this to use different datasets
 
 save_dir = "model"
 data_dir = "data"
@@ -33,4 +34,4 @@ hidden_size = 500
 encoder_n_layers = 2
 decoder_n_layers = 2
 dropout = 0.5
-batch_size = 64
+batch_size = 100

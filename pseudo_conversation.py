@@ -40,7 +40,7 @@ def generate_pesudo_conversations(datafile):
 
 
 def generate_additive(datafile):
-    RANGE = 100
+    RANGE = 150
     duplicates = 1
     pairs = []
     for i in range(RANGE):
