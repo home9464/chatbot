@@ -28,10 +28,10 @@ $python chat.py
 The training data determine:
 
 1. how many different words does the bot speak (vocabulary)
-   
+
 2. how these words are organized to compose a senetence (style)
 
-The 2nd point will be more important because most words are already covered in daily conversations. Since I am a fan of "Friend" (yes, that Friends https://en.wikipedia.org/wiki/Friends).
+The 2nd point will be more important because most words are already covered in daily conversations. Since I am a fan of "Friend" (this Friends https://en.wikipedia.org/wiki/Friends).
 
 Would be great if the bot can talk like Joey? Luckily, the full transcript are public available from here: https://fangj.github.io/friends/
 
